@@ -13,6 +13,7 @@
     "start": "bun dist/cli.js"
   },
   "dependencies": {
+    "@photon-ai/rapid": "^1.0.1",
     "better-grpc": "^0.2.2"
   },
   "devDependencies": {

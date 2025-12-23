@@ -6,6 +6,7 @@
  */
 
 import { Service, server, client, bidi, createGrpcClient } from "better-grpc";
+import { renderChatUI } from "@photon-ai/rapid/cli-chat";
 import * as fs from "fs";
 import * as path from "path";
 import * as readline from "readline";
@@ -320,6 +321,7 @@ async function validateCommand(): Promise<boolean> {
 
 /**
  * Run agent locally (for testing without connecting to bridge)
+ * Uses the Rapid TUI chat interface
  */
 async function runLocal() {
   const agentPath = findAgentFile();
@@ -338,46 +340,29 @@ async function runLocal() {
   }
 
   // Load the agent
-  console.log(`[FLUX] Loading agent from ${path.basename(agentPath)}...`);
   const agent = await loadAgent(agentPath);
-  console.log("[FLUX] Agent loaded successfully!");
-  console.log("[FLUX] Running in local test mode. Type messages to test your agent.");
-  console.log("[FLUX] Press Ctrl+C to exit.\n");
 
-  // Interactive testing loop
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
+  // Start the TUI chat interface
+  const chat = renderChatUI();
+
+  chat.sendMessage("Welcome to Flux! Your agent is loaded. Type a message to test it.");
+
+  chat.onInput(async (input) => {
+    chat.sendMessage("Thinking...");
+
+    try {
+      const response = await agent.invoke({
+        message: input,
+        userPhoneNumber: "+1234567890", // Mock phone number for local testing
+      });
+      chat.sendMessage(response);
+    } catch (error: any) {
+      chat.sendMessage(`Error: ${error.message}`);
+    }
   });
 
-  const askQuestion = () => {
-    rl.question("You: ", async (input) => {
-      if (!input.trim()) {
-        askQuestion();
-        return;
-      }
-
-      try {
-        const response = await agent.invoke({
-          message: input,
-          userPhoneNumber: "+1234567890", // Mock phone number for local testing
-        });
-        console.log(`Agent: ${response}\n`);
-      } catch (error: any) {
-        console.error(`[FLUX] Agent error: ${error.message}\n`);
-      }
-
-      askQuestion();
-    });
-  };
-
-  askQuestion();
-
-  // Handle shutdown
-  rl.on("close", () => {
-    console.log("\n[FLUX] Goodbye!");
-    process.exit(0);
-  });
+  // Keep the Ink app alive. Press Ctrl+C to exit.
+  await new Promise(() => {});
 }
 
 /**
