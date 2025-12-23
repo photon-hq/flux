@@ -8,8 +8,7 @@
     "flux": "./dist/cli.js"
   },
   "scripts": {
-    "dev": "bun src/cli.ts",
-    "dev:server": "bun src/mock-server.ts",
+    "flux": "bun src/cli.ts",
     "build": "bun build src/cli.ts --outdir dist",
     "start": "bun dist/cli.js"
   },

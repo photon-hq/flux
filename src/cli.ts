@@ -2,17 +2,20 @@
  * Flux CLI - gRPC Client for iMessage Bridge
  * ==========================================
  * This code connects the Flux CLI to the Flux Server's iMessage bridge.
+ * Users define their LangChain agent in agent.ts with `export default agent`
  */
 
 import { Service, server, client, bidi, createGrpcClient } from "better-grpc";
 import * as fs from "fs";
 import * as path from "path";
 import * as readline from "readline";
+import { pathToFileURL } from "url";
 
 // --- Configuration ---
 const GRPC_SERVER_ADDRESS = process.env.FLUX_SERVER_ADDRESS || "localhost:50051";
 const CONFIG_DIR = path.join(process.env.HOME || "~", ".flux");
 const CONFIG_FILE = path.join(CONFIG_DIR, "config.json");
+const AGENT_FILE_NAME = "agent.ts";
 
 // --- Auth Storage ---
 
@@ -106,6 +109,71 @@ async function getPhoneNumber(): Promise<string> {
   }
   console.log("[FLUX] Not logged in.");
   return await login();
+}
+
+// --- Agent Types ---
+
+/**
+ * FluxAgent interface - users must export default an object matching this interface
+ * The agent receives a message and returns a response string
+ */
+export interface FluxAgent {
+  invoke: (input: { message: string; userPhoneNumber: string; imageBase64?: string }) => Promise<string>;
+}
+
+// --- Agent Loader ---
+
+/**
+ * Find agent.ts in the current working directory
+ */
+function findAgentFile(): string | null {
+  const cwd = process.cwd();
+  const agentPath = path.join(cwd, AGENT_FILE_NAME);
+
+  if (fs.existsSync(agentPath)) {
+    return agentPath;
+  }
+
+  // Also check for agent.js
+  const jsPath = path.join(cwd, "agent.js");
+  if (fs.existsSync(jsPath)) {
+    return jsPath;
+  }
+
+  return null;
+}
+
+/**
+ * Validate that the agent file exports a default agent with invoke method
+ */
+async function validateAgentFile(agentPath: string): Promise<{ valid: boolean; error?: string }> {
+  try {
+    const moduleUrl = pathToFileURL(agentPath).href;
+    const agentModule = await import(moduleUrl);
+
+    if (!agentModule.default) {
+      return { valid: false, error: "No default export found. Use `export default agent`" };
+    }
+
+    const agent = agentModule.default;
+
+    if (typeof agent.invoke !== "function") {
+      return { valid: false, error: "Agent must have an `invoke` method" };
+    }
+
+    return { valid: true };
+  } catch (error: any) {
+    return { valid: false, error: `Failed to load agent: ${error.message}` };
+  }
+}
+
+/**
+ * Load the agent from agent.ts
+ */
+async function loadAgent(agentPath: string): Promise<FluxAgent> {
+  const moduleUrl = pathToFileURL(agentPath).href;
+  const agentModule = await import(moduleUrl);
+  return agentModule.default as FluxAgent;
 }
 
 // --- Message Types ---
@@ -226,25 +294,145 @@ export class FluxClient {
 
 // --- CLI Commands ---
 
-async function runAgent() {
+/**
+ * Validate command - checks if agent.ts exports correctly
+ */
+async function validateCommand(): Promise<boolean> {
+  const agentPath = findAgentFile();
+
+  if (!agentPath) {
+    console.error("[FLUX] No agent.ts or agent.js found in current directory.");
+    console.error("[FLUX] Create an agent.ts file with `export default agent`");
+    return false;
+  }
+
+  console.log(`[FLUX] Validating ${path.basename(agentPath)}...`);
+  const result = await validateAgentFile(agentPath);
+
+  if (result.valid) {
+    console.log("[FLUX] ✓ Agent is valid!");
+    return true;
+  } else {
+    console.error(`[FLUX] ✗ Validation failed: ${result.error}`);
+    return false;
+  }
+}
+
+/**
+ * Run agent locally (for testing without connecting to bridge)
+ */
+async function runLocal() {
+  const agentPath = findAgentFile();
+
+  if (!agentPath) {
+    console.error("[FLUX] No agent.ts or agent.js found in current directory.");
+    console.error("[FLUX] Create an agent.ts file with `export default agent`");
+    process.exit(1);
+  }
+
+  // Validate first
+  const validation = await validateAgentFile(agentPath);
+  if (!validation.valid) {
+    console.error(`[FLUX] Agent validation failed: ${validation.error}`);
+    process.exit(1);
+  }
+
+  // Load the agent
+  console.log(`[FLUX] Loading agent from ${path.basename(agentPath)}...`);
+  const agent = await loadAgent(agentPath);
+  console.log("[FLUX] Agent loaded successfully!");
+  console.log("[FLUX] Running in local test mode. Type messages to test your agent.");
+  console.log("[FLUX] Press Ctrl+C to exit.\n");
+
+  // Interactive testing loop
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  const askQuestion = () => {
+    rl.question("You: ", async (input) => {
+      if (!input.trim()) {
+        askQuestion();
+        return;
+      }
+
+      try {
+        const response = await agent.invoke({
+          message: input,
+          userPhoneNumber: "+1234567890", // Mock phone number for local testing
+        });
+        console.log(`Agent: ${response}\n`);
+      } catch (error: any) {
+        console.error(`[FLUX] Agent error: ${error.message}\n`);
+      }
+
+      askQuestion();
+    });
+  };
+
+  askQuestion();
+
+  // Handle shutdown
+  rl.on("close", () => {
+    console.log("\n[FLUX] Goodbye!");
+    process.exit(0);
+  });
+}
+
+/**
+ * Run agent in production mode (connected to bridge)
+ */
+async function runProd() {
   const phoneNumber = await getPhoneNumber();
+  const agentPath = findAgentFile();
 
-  // Create client with message handler (this is where your LangChain agent goes)
+  if (!agentPath) {
+    console.error("[FLUX] No agent.ts or agent.js found in current directory.");
+    console.error("[FLUX] Create an agent.ts file with `export default agent`");
+    process.exit(1);
+  }
+
+  // Validate first
+  const validation = await validateAgentFile(agentPath);
+  if (!validation.valid) {
+    console.error(`[FLUX] Agent validation failed: ${validation.error}`);
+    process.exit(1);
+  }
+
+  // Load the agent
+  console.log(`[FLUX] Loading agent from ${path.basename(agentPath)}...`);
+  const agent = await loadAgent(agentPath);
+  console.log("[FLUX] Agent loaded successfully!");
+
+  // Create client with the user's agent as the message handler
   const flux = new FluxClient(phoneNumber, async (message) => {
-    console.log(`Processing: ${message.text}`);
+    console.log(`[FLUX] Processing message from ${message.userPhoneNumber}: ${message.text}`);
 
-    // TODO: Replace with your LangChain agent
-    return `${message.text}`;
+    try {
+      const response = await agent.invoke({
+        message: message.text,
+        userPhoneNumber: message.userPhoneNumber,
+        imageBase64: message.imageBase64,
+      });
+      console.log(`[FLUX] Agent response: ${response}`);
+      return response;
+    } catch (error: any) {
+      console.error(`[FLUX] Agent error: ${error.message}`);
+      return "Sorry, I encountered an error processing your message.";
+    }
   });
 
   // Connect and register
   await flux.connect();
   await flux.register();
 
-  console.log("[FLUX] Agent running. Press Ctrl+C to stop.");
+  console.log("[FLUX] Agent running in production mode. Press Ctrl+C to stop.");
+  console.log(`[FLUX] Messages to ${phoneNumber} will be processed by your agent.\n`);
 
   // Handle shutdown
   process.on("SIGINT", async () => {
+    console.log("\n[FLUX] Shutting down...");
     await flux.disconnect();
     process.exit(0);
   });
@@ -255,6 +443,7 @@ async function runAgent() {
 
 async function main() {
   const command = process.argv[2];
+  const flag = process.argv[3];
 
   switch (command) {
     case "login":
@@ -264,7 +453,18 @@ async function main() {
       logout();
       break;
     case "run":
-      await runAgent();
+      if (flag === "--local") {
+        await runLocal();
+      } else if (flag === "--prod" || !flag) {
+        // Default to prod mode
+        await runProd();
+      } else {
+        console.error(`[FLUX] Unknown flag: ${flag}`);
+        console.log("Usage: flux run [--local | --prod]");
+      }
+      break;
+    case "validate":
+      await validateCommand();
       break;
     case "whoami":
       const config = loadConfig();
@@ -277,10 +477,12 @@ async function main() {
     default:
       console.log("Flux CLI - Connect LangChain agents to iMessage\n");
       console.log("Commands:");
-      console.log("  flux login   - Log in with your phone number");
-      console.log("  flux logout  - Log out");
-      console.log("  flux run     - Run your agent");
-      console.log("  flux whoami  - Show current logged in user");
+      console.log("  flux login          - Log in with your phone number");
+      console.log("  flux logout         - Log out");
+      console.log("  flux validate       - Check if agent.ts exports correctly");
+      console.log("  flux run --local    - Test agent locally (no server connection)");
+      console.log("  flux run --prod     - Run agent connected to bridge (default)");
+      console.log("  flux whoami         - Show current logged in user");
       break;
   }
 }
