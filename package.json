@@ -1,10 +1,10 @@
 {
   "name": "@photon-cli/flux",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Flux CLI - Connect LangChain agents to iMessage",
-  "main": "dist/cli.cjs",
+  "main": "dist/cli.js",
   "bin": {
-    "flux": "./dist/cli.cjs"
+    "flux": "./dist/cli.js"
   },
   "files": [
     "dist"
@@ -12,7 +12,7 @@
   "scripts": {
     "flux": "bun src/cli.ts",
     "build": "tsup",
-    "start": "node dist/cli.cjs"
+    "start": "node dist/cli.js"
   },
   "devDependencies": {
     "@types/bun": "latest",
