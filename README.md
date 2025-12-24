@@ -22,11 +22,23 @@ Build iMessage agents with just Python. Write your agent logic via LangChain, an
 
 | Command | Description |
 |---------|-------------|
-| `flux login` | Login and signup|
-| `flux logout` | Logout |
-| `flux run --local` | Start the development server (local mode) |
-| `flux run --prod` | Start with live iMessage bridge |
-| `flux validate` | Check your code for errors |
+
+| `npx @photon-cli/flux` | Show help |
+| `npx @photon-cli/flux whoami` | Check account |
+| `npx @photon-cli/flux login` | Login and signup|
+| `npx @photon-cli/flux logout` | Logout |
+| `npx @photon-cli/flux run --local` | Start the development server (local mode) |
+| `npx @photon-cli/flux run --prod` | Start with live iMessage bridge |
+| `npx @photon-cli/flux validate` | Check your code for errors |
+
+---
+
+## Installation
+
+```
+npm install @photon-cli/flux
+bun add @photon-cli/flux
+```
 
 ---
 
