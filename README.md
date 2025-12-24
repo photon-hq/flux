@@ -22,7 +22,6 @@ Build iMessage agents with just Python. Write your agent logic via LangChain, an
 
 | Command | Description |
 |---------|-------------|
-
 | `npx @photon-cli/flux` | Show help |
 | `npx @photon-cli/flux whoami` | Check account |
 | `npx @photon-cli/flux login` | Login and signup|
