@@ -2,7 +2,7 @@ import { defineConfig } from "tsup";
 
 export default defineConfig({
   entry: ["src/cli.ts"],
-  format: ["esm"],
+  format: ["cjs"],
   dts: true,
   sourcemap: true,
   clean: true,
@@ -16,16 +16,6 @@ export default defineConfig({
   banner: {
     js: "#!/usr/bin/env node",
   },
-  // Bundle everything except native grpc module
-  external: [
-    "@grpc/grpc-js",
-  ],
-  // Force bundle better-grpc and its dependencies
-  noExternal: [
-    "better-grpc",
-    "it-pushable",
-    "nice-grpc",
-    "nice-grpc-common",
-    "zod",
-  ],
+  // Bundle everything - no externals
+  noExternal: [/.*/],
 });
