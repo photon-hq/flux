@@ -6,7 +6,6 @@
  */
 
 import { Service, server, client, bidi, createGrpcClient } from "better-grpc";
-import { renderChatUI } from "@photon-ai/rapid/cli-chat";
 import * as fs from "fs";
 import * as path from "path";
 import * as readline from "readline";
@@ -321,7 +320,7 @@ async function validateCommand(): Promise<boolean> {
 
 /**
  * Run agent locally (for testing without connecting to bridge)
- * Uses the Rapid TUI chat interface
+ * Uses a simple readline-based chat interface
  */
 async function runLocal() {
   const agentPath = findAgentFile();
@@ -342,27 +341,43 @@ async function runLocal() {
   // Load the agent
   const agent = await loadAgent(agentPath);
 
-  // Start the TUI chat interface
-  const chat = renderChatUI();
+  console.log("\n[FLUX] Welcome to Flux! Your agent is loaded.");
+  console.log("[FLUX] Type a message to test it. Press Ctrl+C to exit.\n");
 
-  chat.sendMessage("Welcome to Flux! Your agent is loaded. Type a message to test it.");
-
-  chat.onInput(async (input) => {
-    chat.sendMessage("Thinking...");
-
-    try {
-      const response = await agent.invoke({
-        message: input,
-        userPhoneNumber: "+1234567890", // Mock phone number for local testing
-      });
-      chat.sendMessage(response);
-    } catch (error: any) {
-      chat.sendMessage(`Error: ${error.message}`);
-    }
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
   });
 
-  // Keep the Ink app alive. Press Ctrl+C to exit.
-  await new Promise(() => {});
+  const askQuestion = () => {
+    rl.question("You: ", async (input) => {
+      if (!input.trim()) {
+        askQuestion();
+        return;
+      }
+
+      console.log("[FLUX] Thinking...");
+
+      try {
+        const response = await agent.invoke({
+          message: input,
+          userPhoneNumber: "+1234567890", // Mock phone number for local testing
+        });
+        console.log(`Agent: ${response}\n`);
+      } catch (error: any) {
+        console.log(`[FLUX] Error: ${error.message}\n`);
+      }
+
+      askQuestion();
+    });
+  };
+
+  rl.on("close", () => {
+    console.log("\n[FLUX] Goodbye!");
+    process.exit(0);
+  });
+
+  askQuestion();
 }
 
 /**
