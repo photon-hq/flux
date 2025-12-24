@@ -2,13 +2,26 @@ import { defineConfig } from "tsup";
 
 export default defineConfig({
   entry: ["src/cli.ts"],
-  format: ["cjs"],
-  target: "node18",
-  outDir: "dist",
+  format: ["cjs", "esm"],
+  dts: true,
+  sourcemap: true,
   clean: true,
+  treeshake: true,
+  minify: false,
+  target: "es2022",
+  outDir: "dist",
+  platform: "node",
+  splitting: false,
+  bundle: true,
   banner: {
     js: "#!/usr/bin/env node",
   },
-  // Don't bundle grpc - it has native dependencies and CommonJS require() calls
-  external: ["@grpc/grpc-js", "nice-grpc", "nice-grpc-common"],
+  external: [
+    "zod",
+    "nice-grpc",
+    "@grpc/grpc-js",
+    "nice-grpc-common",
+    "better-grpc",
+    "it-pushable",
+  ],
 });

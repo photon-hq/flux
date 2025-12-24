@@ -1,71 +1,61 @@
 #!/usr/bin/env node
-"use strict";
-var __create = Object.create;
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getProtoOf = Object.getPrototypeOf;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
-  // If the importer is in node compatibility mode or this is not an ESM
-  // file that has been converted to a CommonJS file using a Babel-
-  // compatible transform (i.e. "__esModule" has not been set), then set
-  // "default" to the CommonJS "module.exports" for node compatibility.
-  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
-  mod
-));
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+'use strict';
 
-// src/cli.ts
-var cli_exports = {};
-__export(cli_exports, {
-  FluxClient: () => FluxClient
-});
-module.exports = __toCommonJS(cli_exports);
-var import_better_grpc = require("better-grpc");
-var import_cli_chat = require("@photon-ai/rapid/cli-chat");
-var fs = __toESM(require("fs"));
-var path = __toESM(require("path"));
-var readline = __toESM(require("readline"));
-var import_url = require("url");
+var betterGrpc = require('better-grpc');
+var cliChat = require('@photon-ai/rapid/cli-chat');
+var fs = require('fs');
+var path = require('path');
+var readline = require('readline');
+var url = require('url');
+
+function _interopNamespace(e) {
+  if (e && e.__esModule) return e;
+  var n = Object.create(null);
+  if (e) {
+    Object.keys(e).forEach(function (k) {
+      if (k !== 'default') {
+        var d = Object.getOwnPropertyDescriptor(e, k);
+        Object.defineProperty(n, k, d.get ? d : {
+          enumerable: true,
+          get: function () { return e[k]; }
+        });
+      }
+    });
+  }
+  n.default = e;
+  return Object.freeze(n);
+}
+
+var fs__namespace = /*#__PURE__*/_interopNamespace(fs);
+var path__namespace = /*#__PURE__*/_interopNamespace(path);
+var readline__namespace = /*#__PURE__*/_interopNamespace(readline);
+
 var GRPC_SERVER_ADDRESS = process.env.FLUX_SERVER_ADDRESS || "localhost:50051";
-var CONFIG_DIR = path.join(process.env.HOME || "~", ".flux");
-var CONFIG_FILE = path.join(CONFIG_DIR, "config.json");
+var CONFIG_DIR = path__namespace.join(process.env.HOME || "~", ".flux");
+var CONFIG_FILE = path__namespace.join(CONFIG_DIR, "config.json");
 var AGENT_FILE_NAME = "agent.ts";
 function loadConfig() {
   try {
-    if (fs.existsSync(CONFIG_FILE)) {
-      return JSON.parse(fs.readFileSync(CONFIG_FILE, "utf-8"));
+    if (fs__namespace.existsSync(CONFIG_FILE)) {
+      return JSON.parse(fs__namespace.readFileSync(CONFIG_FILE, "utf-8"));
     }
   } catch {
   }
   return {};
 }
 function saveConfig(config) {
-  if (!fs.existsSync(CONFIG_DIR)) {
-    fs.mkdirSync(CONFIG_DIR, { recursive: true });
+  if (!fs__namespace.existsSync(CONFIG_DIR)) {
+    fs__namespace.mkdirSync(CONFIG_DIR, { recursive: true });
   }
-  fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2));
+  fs__namespace.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2));
 }
 function clearConfig() {
-  if (fs.existsSync(CONFIG_FILE)) {
-    fs.unlinkSync(CONFIG_FILE);
+  if (fs__namespace.existsSync(CONFIG_FILE)) {
+    fs__namespace.unlinkSync(CONFIG_FILE);
   }
 }
 async function prompt(question) {
-  const rl = readline.createInterface({
+  const rl = readline__namespace.createInterface({
     input: process.stdin,
     output: process.stdout
   });
@@ -89,7 +79,7 @@ async function login() {
         return { received: true };
       }
     });
-    const client2 = await (0, import_better_grpc.createGrpcClient)(GRPC_SERVER_ADDRESS, clientImpl);
+    const client2 = await betterGrpc.createGrpcClient(GRPC_SERVER_ADDRESS, clientImpl);
     const result = await client2.FluxService.validateUser(phoneNumber);
     if (result.error) {
       console.error(`[FLUX] Login failed: ${result.error}`);
@@ -123,19 +113,19 @@ async function getPhoneNumber() {
 }
 function findAgentFile() {
   const cwd = process.cwd();
-  const agentPath = path.join(cwd, AGENT_FILE_NAME);
-  if (fs.existsSync(agentPath)) {
+  const agentPath = path__namespace.join(cwd, AGENT_FILE_NAME);
+  if (fs__namespace.existsSync(agentPath)) {
     return agentPath;
   }
-  const jsPath = path.join(cwd, "agent.js");
-  if (fs.existsSync(jsPath)) {
+  const jsPath = path__namespace.join(cwd, "agent.js");
+  if (fs__namespace.existsSync(jsPath)) {
     return jsPath;
   }
   return null;
 }
 async function validateAgentFile(agentPath) {
   try {
-    const moduleUrl = (0, import_url.pathToFileURL)(agentPath).href;
+    const moduleUrl = url.pathToFileURL(agentPath).href;
     const agentModule = await import(moduleUrl);
     if (!agentModule.default) {
       return { valid: false, error: "No default export found. Use `export default agent`" };
@@ -150,18 +140,18 @@ async function validateAgentFile(agentPath) {
   }
 }
 async function loadAgent(agentPath) {
-  const moduleUrl = (0, import_url.pathToFileURL)(agentPath).href;
+  const moduleUrl = url.pathToFileURL(agentPath).href;
   const agentModule = await import(moduleUrl);
   return agentModule.default;
 }
-var FluxService = class extends (0, import_better_grpc.Service)("FluxService") {
-  sendMessage = (0, import_better_grpc.server)();
-  messageStream = (0, import_better_grpc.bidi)();
-  registerAgent = (0, import_better_grpc.server)();
-  unregisterAgent = (0, import_better_grpc.server)();
-  onIncomingMessage = (0, import_better_grpc.client)();
+var FluxService = class extends betterGrpc.Service("FluxService") {
+  sendMessage = betterGrpc.server();
+  messageStream = betterGrpc.bidi();
+  registerAgent = betterGrpc.server();
+  unregisterAgent = betterGrpc.server();
+  onIncomingMessage = betterGrpc.client();
   // Login validation - checks if user exists in Firebase
-  validateUser = (0, import_better_grpc.server)();
+  validateUser = betterGrpc.server();
 };
 var FluxClient = class {
   client = null;
@@ -177,7 +167,7 @@ var FluxClient = class {
         return { received: true };
       }
     });
-    this.client = await (0, import_better_grpc.createGrpcClient)(GRPC_SERVER_ADDRESS, clientImpl);
+    this.client = await betterGrpc.createGrpcClient(GRPC_SERVER_ADDRESS, clientImpl);
     console.log(`[FLUX] Connected to server at ${GRPC_SERVER_ADDRESS}`);
   }
   async register() {
@@ -234,7 +224,7 @@ async function validateCommand() {
     console.error("[FLUX] Create an agent.ts file with `export default agent`");
     return false;
   }
-  console.log(`[FLUX] Validating ${path.basename(agentPath)}...`);
+  console.log(`[FLUX] Validating ${path__namespace.basename(agentPath)}...`);
   const result = await validateAgentFile(agentPath);
   if (result.valid) {
     console.log("[FLUX] \u2713 Agent is valid!");
@@ -257,7 +247,7 @@ async function runLocal() {
     process.exit(1);
   }
   const agent = await loadAgent(agentPath);
-  const chat = (0, import_cli_chat.renderChatUI)();
+  const chat = cliChat.renderChatUI();
   chat.sendMessage("Welcome to Flux! Your agent is loaded. Type a message to test it.");
   chat.onInput(async (input) => {
     chat.sendMessage("Thinking...");
@@ -288,7 +278,7 @@ async function runProd() {
     console.error(`[FLUX] Agent validation failed: ${validation.error}`);
     process.exit(1);
   }
-  console.log(`[FLUX] Loading agent from ${path.basename(agentPath)}...`);
+  console.log(`[FLUX] Loading agent from ${path__namespace.basename(agentPath)}...`);
   const agent = await loadAgent(agentPath);
   console.log("[FLUX] Agent loaded successfully!");
   const flux = new FluxClient(phoneNumber, async (message) => {
@@ -363,7 +353,7 @@ async function main() {
   }
 }
 main().catch(console.error);
-// Annotate the CommonJS export names for ESM import in node:
-0 && (module.exports = {
-  FluxClient
-});
+
+exports.FluxClient = FluxClient;
+//# sourceMappingURL=cli.js.map
+//# sourceMappingURL=cli.js.map
