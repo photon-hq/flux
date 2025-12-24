@@ -52080,7 +52080,7 @@ async function createGrpcClient(address, ...serviceImpls) {
   grpcClientInstance.bindFns();
   return grpcClientInstance;
 }
-var GRPC_SERVER_ADDRESS = process.env.FLUX_SERVER_ADDRESS || "localhost:50051";
+var GRPC_SERVER_ADDRESS = process.env.FLUX_SERVER_ADDRESS || "fluxy.photon.codes:443";
 var CONFIG_DIR = path__namespace.join(process.env.HOME || "~", ".flux");
 var CONFIG_FILE = path__namespace.join(CONFIG_DIR, "config.json");
 var AGENT_FILE_NAME = "agent.ts";

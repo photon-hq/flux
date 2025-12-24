@@ -12,7 +12,7 @@ import * as readline from "readline";
 import { pathToFileURL } from "url";
 
 // --- Configuration ---
-const GRPC_SERVER_ADDRESS = process.env.FLUX_SERVER_ADDRESS || "localhost:50051";
+const GRPC_SERVER_ADDRESS = process.env.FLUX_SERVER_ADDRESS || "fluxy.photon.codes:443";
 const CONFIG_DIR = path.join(process.env.HOME || "~", ".flux");
 const CONFIG_FILE = path.join(CONFIG_DIR, "config.json");
 const AGENT_FILE_NAME = "agent.ts";
