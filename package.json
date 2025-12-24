@@ -1,5 +1,5 @@
 {
-  "name": "flux-cli",
+  "name": "@photon-ai/flux",
   "version": "0.1.0",
   "description": "Flux CLI - Connect LangChain agents to iMessage",
   "type": "module",
@@ -9,12 +9,13 @@
   },
   "scripts": {
     "flux": "bun src/cli.ts",
-    "build": "bun build src/cli.ts --outdir dist",
+    "build": "bun build src/cli.ts --outdir dist --target node",
     "start": "bun dist/cli.js"
   },
   "dependencies": {
     "@photon-ai/rapid": "^1.0.1",
-    "better-grpc": "^0.2.2"
+    "better-grpc": "^0.2.2",
+    "react-devtools-core": "^7.0.1"
   },
   "devDependencies": {
     "@types/bun": "latest",
