@@ -6,6 +6,19 @@ import { FluxAgent } from "./agent-type";
 
 const AGENT_FILE_NAME = "agent.ts";
 
+// Register tsx to enable TypeScript imports
+let tsxRegistered = false;
+async function registerTsx(): Promise<void> {
+  if (tsxRegistered) return;
+  try {
+    await import("tsx/esm/api").then((tsx) => tsx.register());
+    tsxRegistered = true;
+  } catch (error) {
+    // tsx registration failed, will fall back to .js only
+    console.warn("[FLUX] TypeScript support unavailable, falling back to .js files only");
+  }
+}
+
 export function findAgentFile(): string | null {
   const cwd = process.cwd();
   const agentPath = path.join(cwd, AGENT_FILE_NAME);
@@ -25,6 +38,11 @@ export function findAgentFile(): string | null {
 
 export async function validateAgentFile(agentPath: string): Promise<{ valid: boolean; error?: string }> {
   try {
+    // Register tsx if loading a TypeScript file
+    if (agentPath.endsWith(".ts")) {
+      await registerTsx();
+    }
+
     const moduleUrl = pathToFileURL(agentPath).href;
     const agentModule = await import(moduleUrl);
 
@@ -45,6 +63,11 @@ export async function validateAgentFile(agentPath: string): Promise<{ valid: boo
 }
 
 export async function loadAgent(agentPath: string): Promise<FluxAgent> {
+  // Register tsx if loading a TypeScript file
+  if (agentPath.endsWith(".ts")) {
+    await registerTsx();
+  }
+
   const moduleUrl = pathToFileURL(agentPath).href;
   const agentModule = await import(moduleUrl);
   return agentModule.default as FluxAgent;
