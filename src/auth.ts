@@ -9,7 +9,7 @@ import { FluxService } from "./service";
 const GRPC_SERVER_ADDRESS = process.env.FLUX_SERVER_ADDRESS || "fluxy.photon.codes:443";
 const CONFIG_DIR = path.join(process.env.HOME || "~", ".flux");
 const CONFIG_FILE = path.join(CONFIG_DIR, "credentials.json");
-const VERIFICATION_EMAIL = "verify@photon.codes"; // iMessage address for verification
+const VERIFICATION_NUMBER = "+16286298650"; // Flux iMessage number for verification
 
 interface FluxCredentials {
   token?: string;
@@ -127,11 +127,11 @@ export async function login(): Promise<string> {
 
     // Step 2: Open iMessage with pre-filled code
     try {
-      await openIMessage(VERIFICATION_EMAIL, code);
-      console.log(`[FLUX] Please send the code "${code}" to ${VERIFICATION_EMAIL} via iMessage.`);
+      await openIMessage(VERIFICATION_NUMBER, code);
+      console.log(`[FLUX] Please send the code "${code}" to ${VERIFICATION_NUMBER} via iMessage.`);
     } catch {
       console.log(`[FLUX] Could not open iMessage automatically.`);
-      console.log(`[FLUX] Please manually send "${code}" to ${VERIFICATION_EMAIL} via iMessage.`);
+      console.log(`[FLUX] Please manually send "${code}" to ${VERIFICATION_NUMBER} via iMessage.`);
     }
 
     console.log("[FLUX] Waiting for verification...");
