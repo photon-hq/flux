@@ -57,6 +57,15 @@ Message +16286298650 with you phone number to text the LangChain agent that you 
 
 ---
 
+## Log in
+
+Authentication is based on iMessage: 
+- The user (client) sends a code to the Flux number to prove phone ownership. 
+- The server generates a UUID per login attempt. It then waits for the iMessage text from the client with the UUID. Once verified, it will issue a token. 
+- Credentials (token, phone, timestamp) are saved to credentials.json. This way, the user only has to log in once. 
+
+---
+
 ## Usage 
 
 #### Step 1: Create LangChain Agent
@@ -80,8 +89,28 @@ Authenticate with your phone number and iMessage:
 npx @photon-ai/flux login
 
 Enter your phone number (e.g. +15551234567): +1234567890
-[FLUX] Validating with server...
-[FLUX] Logged in as +1234567890
+[FLUX] Requesting verification code...
+[FLUX] Verification code: d33gwu
+[FLUX] Opening iMessage to send verification code...
+[FLUX] Please send the code "d33gwu" to +16286298650 via iMessage.
+[FLUX] Waiting for verification...
+[FLUX] Successfully logged in as +1234567890
+```
+
+If already logged in: 
+
+```
+npx @photon-ai/flux login
+
+[FLUX] Already logged in as +1234567890
+```
+
+Log out: 
+
+```
+npx @photon-ai/flux logout
+
+[FLUX] Logged out.
 ```
 
 ### Step 3: Validate
