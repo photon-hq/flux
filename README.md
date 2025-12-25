@@ -14,7 +14,17 @@
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 [![Discord](https://img.shields.io/badge/Discord-Join-5865F2.svg?logo=discord&logoColor=white)](https://discord.gg/bZd4CMd2H5)
 
-Build iMessage agents with just Python. Write your agent logic via LangChain, and Flux handles the rest, from routing, sessions, tool execution, and deployment.
+Flux is an open-sourced CLI tool that lets developers build and deploy LangChain agents that connect to iMessage at no cost and under 5 seconds. 
+
+---
+
+## Features
+
+- **Deploy with a single command**: Export a LangChain agent and deploy it to iMessage with a single command. 
+- **Text your agent from your phone**: Send an iMessage to the Flux number and get responses from your running agent. 
+- **Testing mode**: Test your agent through your terminal before connecting to the iMessage brigde. 
+- **Phone Number Authentication**: Log in with just your phone number and iMessage. 
+- **Agent Validation**: Automatically validate your LangChain agent in the CLI. 
 
 ---
 
