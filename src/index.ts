@@ -3,7 +3,7 @@ import * as path from "path";
 import * as readline from "readline";
 
 import { FluxClient } from "./flux-client";
-import { login, logout, loadConfig, getPhoneNumber } from "./auth";
+import { login, logout, loadConfig, getAuthToken } from "./auth";
 import { findAgentFile, validateAgentFile, loadAgent } from "./agent-loader";
 
 async function validateCommand(): Promise<boolean> {
@@ -84,11 +84,9 @@ async function runLocal() {
 }
 
 async function runProd() {
+  // Get authenticated token and phone number
+  const { token, phone: phoneNumber } = await getAuthToken();
 
-  // TEMPORARY: Bypass login for testing
-  // const phoneNumber = "+17185619177";
-
-  const phoneNumber = await getPhoneNumber();
   const agentPath = findAgentFile();
 
   if (!agentPath) {
@@ -107,7 +105,7 @@ async function runProd() {
   const agent = await loadAgent(agentPath);
   console.log("[FLUX] Agent loaded successfully!");
 
-  const flux = new FluxClient(phoneNumber, async (message) => {
+  const flux = new FluxClient(phoneNumber, token, async (message) => {
     console.log(`[FLUX] Processing message from ${message.userPhoneNumber}: ${message.text}`);
 
     try {
@@ -148,7 +146,7 @@ async function main() {
       await login();
       break;
     case "logout":
-      logout();
+      await logout();
       break;
     case "run":
       if (flag === "--local") {

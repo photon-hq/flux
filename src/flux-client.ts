@@ -8,13 +8,16 @@ const GRPC_SERVER_ADDRESS = process.env.FLUX_SERVER_ADDRESS || "fluxy.photon.cod
 export class FluxClient {
   private client: Awaited<ReturnType<typeof createGrpcClient>> | null = null;
   private phoneNumber: string;
+  private token: string;
   private onMessage: (message: IncomingMessage) => Promise<string | void>;
 
   constructor(
     phoneNumber: string,
+    token: string,
     onMessage: (message: IncomingMessage) => Promise<string | void>
   ) {
     this.phoneNumber = phoneNumber.replace(/[\s\-\(\)]/g, "");
+    this.token = token;
     this.onMessage = onMessage;
   }
 
@@ -32,7 +35,7 @@ export class FluxClient {
   async register(): Promise<boolean> {
     if (!this.client) throw new Error("Not connected. Call connect() first.");
 
-    const result = await this.client.FluxService.registerAgent(this.phoneNumber);
+    const result = await this.client.FluxService.registerAgent(this.phoneNumber, this.token);
     if (result.success) {
       console.log(`[FLUX] Registered agent for ${this.phoneNumber}`);
       this.startMessageStream();
