@@ -31,8 +31,8 @@ Flux is an open-sourced CLI tool that lets developers build and deploy LangChain
 ## Installation
 
 ```
-npm install @photon-cli/flux
-bun add @photon-cli/flux
+npm install @photon-ai/flux
+bun add @photon-ai/flux
 ```
 
 ---
@@ -41,13 +41,13 @@ bun add @photon-cli/flux
 
 | Command | Description |
 |---------|-------------|
-| `npx @photon-cli/flux` | Show help |
-| `npx @photon-cli/flux whoami` | Check account |
-| `npx @photon-cli/flux login` | Login and signup|
-| `npx @photon-cli/flux logout` | Logout |
-| `npx @photon-cli/flux run --local` | Start the development server (local mode) |
-| `npx @photon-cli/flux run --prod` | Start with live iMessage bridge |
-| `npx @photon-cli/flux validate` | Check your code for errors |
+| `npx @photon-ai/flux` | Show help |
+| `npx @photon-ai/flux whoami` | Check account |
+| `npx @photon-ai/flux login` | Login and signup|
+| `npx @photon-ai/flux logout` | Logout |
+| `npx @photon-ai/flux run --local` | Start the development server (local mode) |
+| `npx @photon-ai/flux run --prod` | Start with live iMessage bridge |
+| `npx @photon-ai/flux validate` | Check your code for errors |
 
 ---
 
@@ -77,7 +77,7 @@ export default {
 Authenticate with your phone number and iMessage: 
 
 ```
-npx @photon-cli/flux login
+npx @photon-ai/flux login
 
 Enter your phone number (e.g. +15551234567): +1234567890
 [FLUX] Validating with server...
@@ -89,7 +89,7 @@ Enter your phone number (e.g. +15551234567): +1234567890
 Validate that your agent works and exports correctly: 
 
 ```
-npx @photon-cli/flux validate
+npx @photon-ai/flux validate
 
 [FLUX] Validating agent.ts...
 [FLUX] Agent is valid!
@@ -100,7 +100,7 @@ npx @photon-cli/flux validate
 Test your agent through your terminal (no iMessage connection): 
 
 ```
-npx @photon-cli/flux run --local
+npx @photon-ai/flux run --local
 
 [FLUX] Welcome to Flux! Your agent is loaded.
 [FLUX] Type a message to test it. Press Ctrl+C to exit.
@@ -115,7 +115,7 @@ Agent: Hello! How can I assist you today?
 Run your agent locally and connect it to the iMessage bridge. When you message the FLUX number with your phone number, you will receive the output of your LangChain agent: 
 
 ```
-npx @photon-cli/flux run --prod
+npx @photon-ai/flux run --prod
 
 [FLUX] Loading agent from agent.ts...
 [FLUX] Agent loaded successfully!
