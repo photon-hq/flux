@@ -28,6 +28,15 @@ Flux is an open-sourced CLI tool that lets developers build and deploy LangChain
 
 ---
 
+## Installation
+
+```
+npm install @photon-cli/flux
+bun add @photon-cli/flux
+```
+
+---
+
 ## CLI Commands
 
 | Command | Description |
@@ -42,12 +51,13 @@ Flux is an open-sourced CLI tool that lets developers build and deploy LangChain
 
 ---
 
-## Installation
+## Why Flux
 
-```
-npm install @photon-cli/flux
-bun add @photon-cli/flux
-```
+---
+
+## Examples
+
+
 
 ---
 
