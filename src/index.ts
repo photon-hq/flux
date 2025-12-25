@@ -84,6 +84,10 @@ async function runLocal() {
 }
 
 async function runProd() {
+
+  // TEMPORARY: Bypass login for testing
+  // const phoneNumber = "+17185619177";
+
   const phoneNumber = await getPhoneNumber();
   const agentPath = findAgentFile();
 
