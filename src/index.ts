@@ -144,10 +144,10 @@ async function main() {
   switch (command) {
     case "login":
       await login();
-      break;
+      process.exit(0);
     case "logout":
       await logout();
-      break;
+      process.exit(0);
     case "run":
       if (flag === "--local") {
         await runLocal();
