@@ -16,6 +16,7 @@ export default defineConfig({
   banner: {
     js: "#!/usr/bin/env node",
   },
-  // Bundle everything - no externals
-  noExternal: [/.*/],
+  // Bundle everything except tsx (needs to be external for runtime registration)
+  noExternal: [/^(?!tsx).*/],
+  external: ["tsx"],
 });
