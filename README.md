@@ -16,7 +16,7 @@
 
 Flux is an open-sourced CLI tool that lets developers build and deploy LangChain agents that connect to iMessage at no cost and under 5 seconds. 
 
----
+<!-- --- -->
 
 ## Features
 
@@ -26,16 +26,18 @@ Flux is an open-sourced CLI tool that lets developers build and deploy LangChain
 - **Phone Number Authentication**: Log in with just your phone number and iMessage. 
 - **Agent Validation**: Automatically validate your LangChain agent in the CLI. 
 
----
+<!-- --- -->
 
 ## Installation
 
+### 
 ```
 npm install @photon-ai/flux
+#or
 bun add @photon-ai/flux
 ```
 
----
+<!-- --- -->
 
 ## CLI Commands
 
@@ -49,13 +51,13 @@ bun add @photon-ai/flux
 | `npx @photon-ai/flux run --prod` | Start with live iMessage bridge |
 | `npx @photon-ai/flux validate` | Check your code for errors |
 
----
+<!-- --- -->
 
 ## Flux Number
 
 Message +16286298650 with you phone number to text the LangChain agent that you built. 
 
----
+<!-- --- -->
 
 ## Log in
 
@@ -64,7 +66,7 @@ Authentication is based on iMessage:
 - The server generates a UUID per login attempt. It then waits for the iMessage text from the client with the UUID. Once verified, it will issue a token. 
 - Credentials (token, phone, timestamp) are saved to credentials.json. This way, the user only has to log in once. 
 
----
+<!-- --- -->
 
 ## Usage 
 
@@ -155,7 +157,7 @@ npx @photon-ai/flux run --prod
 
 ```
 
----
+<!-- --- -->
 
 ## Why Flux
 
@@ -169,7 +171,7 @@ Flux solves these problems in the following ways:
 - **Open source**: Fully community driven.
 - **Free to use**: No subscription fees.
 
----
+<!-- --- -->
 
 ## Examples
 
@@ -244,7 +246,7 @@ export default {
 };
 ```
 
----
+<!-- --- -->
 
 ## Requirements
 
@@ -252,7 +254,7 @@ export default {
 - **Python** 3.9+ (for the agent)
 - **LLM Keys (e.g. OpenAI API key)**
 
----
+<!-- --- -->
 
 
 <div align="center">
