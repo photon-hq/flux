@@ -55,7 +55,7 @@ bun add @photon-ai/flux
 
 ## Flux Number
 
-Message +16286298650 with you phone number to text the LangChain agent that you built. 
+Message `+16286298650` with you phone number to text the LangChain agent that you built. 
 
 <!-- --- -->
 
@@ -70,9 +70,9 @@ Authentication is based on iMessage:
 
 ## Usage 
 
-#### Step 1: Create LangChain Agent
+### Step 1: Create LangChain Agent
 
-Create agent.ts file with your LangChain agent: 
+Create an `agent.ts` file with your LangChain agent. Make sure to have `export default agent`. Below is one simple example:
 
 ```
 // agent.ts
