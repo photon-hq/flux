@@ -70,5 +70,9 @@ export async function loadAgent(agentPath: string): Promise<FluxAgent> {
 
   const moduleUrl = pathToFileURL(agentPath).href;
   const agentModule = await import(moduleUrl);
-  return agentModule.default as FluxAgent;
+  const agent = agentModule.default as FluxAgent;
+  if (agent.onInit) {
+    await agent.onInit();
+  }
+  return agent;
 }
