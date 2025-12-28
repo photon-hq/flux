@@ -69,14 +69,20 @@ async function runLocal() {
         console.log(`Agent: ${response}\n`);
       } catch (error: any) {
         console.log(`[FLUX] Error: ${error.message}\n`);
+        if (agent.onError) {
+          await agent.onError(error);
+        }
       }
 
       askQuestion();
     });
   };
 
-  rl.on("close", () => {
+  rl.on("close", async () => {
     console.log("\n[FLUX] Goodbye!");
+    if (agent.onShutdown) {
+      await agent.onShutdown();
+    }
     process.exit(0);
   });
 
@@ -130,6 +136,9 @@ async function runProd() {
 
   process.on("SIGINT", async () => {
     console.log("\n[FLUX] Shutting down...");
+    if (agent.onShutdown) {
+      await agent.onShutdown();
+    }
     await flux.disconnect();
     process.exit(0);
   });
