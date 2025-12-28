@@ -28,7 +28,7 @@ export class FluxClient {
       },
     });
 
-    this.client = await createGrpcClient(GRPC_SERVER_ADDRESS, clientImpl);
+    this.client = (await createGrpcClient(GRPC_SERVER_ADDRESS, clientImpl)) as unknown as Awaited<ReturnType<typeof createGrpcClient>>;
     console.log(`[FLUX] Connected to server at ${GRPC_SERVER_ADDRESS}`);
   }
 
@@ -49,7 +49,8 @@ export class FluxClient {
     if (!this.client) return;
 
     (async () => {
-      for await (const [message] of this.client!.FluxService.messageStream) {
+      const stream = this.client!.FluxService.messageStream;
+      for await (const [message] of stream as AsyncIterable<[IncomingMessage | { ack: string }]>) {
         if ("ack" in message) {
           console.log(`[FLUX] Received ack: ${message.ack}`);
         } else {
