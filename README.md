@@ -319,7 +319,7 @@ For **enterprise-level iMessage agents** with advanced features, consider our [A
 - **Dedicated phone line** — Get your own iMessage number
 - **Enterprise features** — Advanced conversation management and analytics
 - **Production-ready** — Enhanced stability and performance
-- **More functionalities** — Additional tools and integrations
+- **More features** — Additional tools and integrations
 
 [**Explore Advanced iMessage Kit →**](https://github.com/photon-hq/advanced-imessage-kit)
 
