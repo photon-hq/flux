@@ -125,6 +125,12 @@ async function runProd() {
   await flux.connect();
   await flux.register();
 
+  // Initialize agent with proactive messaging support (scheduler , bg tasks)
+  if (typeof (agent as any).init === "function") {
+    console.log("[FLUX] Initializing agent with proactive messaging support...");
+    (agent as any).init((to: string, text: string) => flux.sendMessage(to, text));
+  }
+
   console.log("[FLUX] Agent running in production mode. Press Ctrl+C to stop.");
   console.log(`[FLUX] Messages to ${phoneNumber} will be processed by your agent.\n`);
 
