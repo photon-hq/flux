@@ -225,6 +225,24 @@ Authentication is based on iMessage to ensure secure and simple access:
 3. **Token Issuance**: Once verified, the server issues an authentication token
 4. **Persistent Login**: Credentials (token, phone, timestamp) are saved to `credentials.json`, so you only need to log in once
 
+## Proactive Messaging 
+
+Agents can initiate conversations without waiting for a user message.  In production mode, `onInit` receives a sendMessage function that lets your agent send messages at any time.
+
+```
+let sendMessage: (to: string, text: string) => Promise<boolean>;
+
+export default {
+  async onInit(send) {
+    sendMessage = send;
+    // Now you can call sendMessage() anywhere in your agent
+  },
+  // ...
+};
+```
+
+**Note**: Proactive messaging is only available in production mode `(flux run --prod`). In local mode, `onInit` is called without arguments.
+
 ## 💡 Examples
 
 ### Weather Agent

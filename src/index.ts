@@ -44,6 +44,11 @@ async function runLocal() {
 
   const agent = await loadAgent(agentPath);
 
+  // Initialize agent (no sendMessage in local mode)
+  if (agent.onInit) {
+    await agent.onInit();
+  }
+
   console.log("\n[FLUX] Welcome to Flux! Your agent is loaded.");
   console.log("[FLUX] Type a message to test it. Press Ctrl+C to exit.\n");
 
@@ -130,6 +135,12 @@ async function runProd() {
 
   await flux.connect();
   await flux.register();
+
+  // Initialize agent with sendMessage for proactive messaging
+  if (agent.onInit) {
+    console.log("[FLUX] Initializing agent with proactive messaging support...");
+    await agent.onInit((to: string, text: string) => flux.sendMessage(to, text));
+  }
 
   console.log("[FLUX] Agent running in production mode. Press Ctrl+C to stop.");
   console.log(`[FLUX] Messages to ${phoneNumber} will be processed by your agent.\n`);
