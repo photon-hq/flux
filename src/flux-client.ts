@@ -5,6 +5,15 @@ import { IncomingMessage } from "./models";
 
 const GRPC_SERVER_ADDRESS = process.env.FLUX_SERVER_ADDRESS || "fluxy.photon.codes:443";
 
+function splitIntoMessages(response: string): string[] {
+  if (!response.includes('\n')) {
+    return [response];
+  }
+
+  const parts = response.split('\n').map(p => p.trim()).filter(p => p);
+  return parts.length > 0 ? parts : [response];
+}
+
 export class FluxClient {
   private client: Awaited<ReturnType<typeof createGrpcClient>> | null = null;
   private phoneNumber: string;
@@ -64,7 +73,10 @@ export class FluxClient {
 
           // Send response if agent returned one
           if (response) {
-            await this.sendMessage(message.userPhoneNumber, response, message.chatGuid);
+            const messages = splitIntoMessages(response);
+            for (const msg of messages) {
+              await this.sendMessage(message.userPhoneNumber, msg, message.chatGuid);
+            }
           }
         }
       }

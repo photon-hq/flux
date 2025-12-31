@@ -6,6 +6,15 @@ import { FluxClient } from "./flux-client";
 import { login, logout, loadConfig, getAuthToken } from "./auth";
 import { findAgentFile, validateAgentFile, loadAgent } from "./agent-loader";
 
+function splitIntoMessages(response: string): string[] {
+  if (!response.includes('\n')) {
+    return [response];
+  }
+
+  const parts = response.split('\n').map(p => p.trim()).filter(p => p);
+  return parts.length > 0 ? parts : [response];
+}
+
 async function validateCommand(): Promise<boolean> {
   const agentPath = findAgentFile();
 
@@ -71,7 +80,11 @@ async function runLocal() {
           message: input,
           userPhoneNumber: "+1234567890",
         });
-        console.log(`Agent: ${response}\n`);
+        const messages = splitIntoMessages(response);
+        for (const msg of messages) {
+          console.log(`Agent: ${msg}`);
+        }
+        console.log();
       } catch (error: any) {
         console.log(`[FLUX] Error: ${error.message}\n`);
         if (agent.onError) {
@@ -139,7 +152,14 @@ async function runProd() {
   // Initialize agent with sendMessage for proactive messaging
   if (agent.onInit) {
     console.log("[FLUX] Initializing agent with proactive messaging support...");
-    await agent.onInit((to: string, text: string) => flux.sendMessage(to, text));
+    await agent.onInit(async (to: string, text: string) => {
+      const messages = splitIntoMessages(text);
+      for (const msg of messages) {
+        const success = await flux.sendMessage(to, msg);
+        if (!success) return false;
+      }
+      return true;
+    });
   }
 
   console.log("[FLUX] Agent running in production mode. Press Ctrl+C to stop.");
