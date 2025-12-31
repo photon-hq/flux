@@ -241,7 +241,13 @@ export default {
 };
 ```
 
-**Note**: Proactive messaging is only available in production mode `(flux run --prod`). In local mode, `onInit` is called without arguments.
+## Multi-Bubble Responses
+
+Agents can send multi-bubble responses by using '\n'. 
+
+The `splitIntoMessages` helper function splits messages using `\n` and then loops through the split messages and sends each one. 
+
+For example, `"Hello!\nHow are you?\nNice to meet you!"` will be sent as three separate message bubbles. 
 
 ## 💡 Examples
 
