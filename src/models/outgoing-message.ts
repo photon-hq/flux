@@ -2,5 +2,4 @@
 export interface OutgoingMessage {
   userPhoneNumber: string;
   text: string;
-  chatGuid?: string;
 }

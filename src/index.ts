@@ -136,6 +136,7 @@ async function runProd() {
       const response = await agent.invoke({
         message: message.text,
         userPhoneNumber: message.userPhoneNumber,
+        messageGuid: message.messageGuid,
         imageBase64: message.imageBase64,
       });
       console.log(`[FLUX] Agent response: ${response}`);
@@ -149,17 +150,22 @@ async function runProd() {
   await flux.connect();
   await flux.register();
 
-  // Initialize agent with sendMessage for proactive messaging
+  // Initialize agent with sendMessage and sendTapback for proactive messaging
   if (agent.onInit) {
     console.log("[FLUX] Initializing agent with proactive messaging support...");
-    await agent.onInit(async (to: string, text: string) => {
-      const messages = splitIntoMessages(text);
-      for (const msg of messages) {
-        const success = await flux.sendMessage(to, msg);
-        if (!success) return false;
+    await agent.onInit(
+      async (to: string, text: string) => {
+        const messages = splitIntoMessages(text);
+        for (const msg of messages) {
+          const success = await flux.sendMessage(to, msg);
+          if (!success) return false;
+        }
+        return true;
+      },
+      async (messageGuid: string, reaction: string) => {
+        return flux.sendTapback(messageGuid, reaction as any);
       }
-      return true;
-    });
+    );
   }
 
   console.log("[FLUX] Agent running in production mode. Press Ctrl+C to stop.");

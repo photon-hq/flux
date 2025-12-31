@@ -2,6 +2,7 @@
 import { createGrpcClient } from "better-grpc";
 import { FluxService } from "./service";
 import { IncomingMessage } from "./models";
+import { TapbackType } from "./agent-type";
 
 const GRPC_SERVER_ADDRESS = process.env.FLUX_SERVER_ADDRESS || "fluxy.photon.codes:443";
 
@@ -75,7 +76,7 @@ export class FluxClient {
           if (response) {
             const messages = splitIntoMessages(response);
             for (const msg of messages) {
-              await this.sendMessage(message.userPhoneNumber, msg, message.chatGuid);
+              await this.sendMessage(message.userPhoneNumber, msg);
             }
           }
         }
@@ -83,19 +84,41 @@ export class FluxClient {
     })();
   }
 
-  async sendMessage(to: string, text: string, chatGuid?: string): Promise<boolean> {
+  async sendMessage(to: string, text: string): Promise<boolean> {
     if (!this.client) throw new Error("Not connected. Call connect() first.");
 
     const result = await this.client.FluxService.sendMessage({
       userPhoneNumber: to,
       text,
-      chatGuid,
     });
 
     if (!result.success) {
       console.error(`[FLUX] Send failed: ${result.error}`);
     }
     return result.success;
+  }
+
+  async sendTapback(messageGuid: string, reaction: TapbackType): Promise<boolean> {
+    if (!this.client) throw new Error("Not connected. Call connect() first.");
+
+    console.log(`[FLUX] Sending tapback: messageGuid=${messageGuid}, reaction=${reaction}`);
+
+    try {
+      const result = await this.client.FluxService.sendTapback({
+        messageGuid,
+        reaction,
+      });
+
+      if (result.success) {
+        console.log(`[FLUX] Tapback sent successfully!`);
+      } else {
+        console.error(`[FLUX] Tapback failed: ${result.error}`);
+      }
+      return result.success;
+    } catch (error: any) {
+      console.error(`[FLUX] Tapback error: ${error.message}`);
+      return false;
+    }
   }
 
   async disconnect(): Promise<void> {

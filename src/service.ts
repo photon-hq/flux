@@ -6,6 +6,7 @@ import { IncomingMessage, OutgoingMessage } from "./models";
 abstract class FluxService extends Service("FluxService") {
   // Message handling
   sendMessage = server<(message: OutgoingMessage) => { success: boolean; error?: string }>();
+  sendTapback = server<(request: { messageGuid: string; reaction: string }) => { success: boolean; error?: string }>();
   messageStream = bidi<(message: IncomingMessage | { ack: string }) => void>();
   registerAgent = server<(phoneNumber: string, token: string) => { success: boolean; error?: string }>();
   unregisterAgent = server<(phoneNumber: string) => { success: boolean }>();

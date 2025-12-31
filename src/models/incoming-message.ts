@@ -3,6 +3,5 @@ export interface IncomingMessage {
   userPhoneNumber: string;
   text: string;
   imageBase64?: string;
-  chatGuid: string;
   messageGuid: string;
 }
