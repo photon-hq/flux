@@ -254,7 +254,7 @@ For example, `"Hello!\nHow are you?\nNice to meet you!"` will be sent as three s
 Agents can send tapback reactions (love, like, dislike, laugh, emphasize, question). When your agent receives a message, it can react to it using the `sendTapback` function. 
 
 To use `sendTapback`, you need to: 
-1. Capture `sendTapback` in onInit once at startup
+1. Capture `sendTapback` in `onInit` once at startup
 2. Call it in `invoke` when processing messages
 
 ```
