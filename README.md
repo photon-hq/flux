@@ -249,6 +249,37 @@ The `splitIntoMessages` helper function splits messages using `\n` and then loop
 
 For example, `"Hello!\nHow are you?\nNice to meet you!"` will be sent as three separate message bubbles. 
 
+## Tapbacks
+
+Agents can send tapback reactions (love, like, dislike, laugh, emphasize, question). When your agent receives a message, it can react to it using the `sendTapback` function. 
+
+To use `sendTapback`, you need to: 
+1. Capture `sendTapback` in onInit once at startup
+2. Call it in `invoke` when processing messages
+
+```
+import { FluxAgent, SendTapbackFn } from '@photon-ai/flux';
+
+let sendTapback: SendTapbackFn | undefined;
+
+const agent: FluxAgent = {
+  onInit: async (_sendMessage, _sendTapback) => {
+    sendTapback = _sendTapback;  // Save it for later
+  },
+
+  invoke: async ({ message, userPhoneNumber, messageGuid }) => {
+    // Now you can use it
+    if (sendTapback && messageGuid) {
+      await sendTapback(messageGuid, 'love', userPhoneNumber);
+    }
+
+    return "Hello!";
+  },
+};
+
+export default agent;
+```
+
 ## 💡 Examples
 
 ### Weather Agent
