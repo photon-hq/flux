@@ -5,6 +5,7 @@ import * as readline from "readline";
 import { FluxClient } from "./flux-client";
 import { login, logout, loadConfig, getAuthToken } from "./auth";
 import { findAgentFile, validateAgentFile, loadAgent } from "./agent-loader";
+import { memory } from "./memory";
 
 function splitIntoMessages(response: string): string[] {
   if (!response.includes('\n')) {
@@ -66,6 +67,8 @@ async function runLocal() {
     output: process.stdout,
   });
 
+  const localPhoneNumber = "+1234567890";
+
   const askQuestion = () => {
     rl.question("You: ", async (input) => {
       if (!input.trim()) {
@@ -73,13 +76,29 @@ async function runLocal() {
         return;
       }
 
+      // Add user message to memory
+      memory.add(localPhoneNumber, {
+        role: "user",
+        content: input,
+        timestamp: Date.now(),
+      });
+
       console.log("[FLUX] Thinking...");
 
       try {
         const response = await agent.invoke({
           message: input,
-          userPhoneNumber: "+1234567890",
+          userPhoneNumber: localPhoneNumber,
+          history: memory.get(localPhoneNumber),
         });
+
+        // Add assistant response to memory
+        memory.add(localPhoneNumber, {
+          role: "assistant",
+          content: response,
+          timestamp: Date.now(),
+        });
+
         const messages = splitIntoMessages(response);
         for (const msg of messages) {
           console.log(`Agent: ${msg}`);
@@ -132,13 +151,30 @@ async function runProd() {
   const flux = new FluxClient(phoneNumber, token, async (message) => {
     console.log(`[FLUX] Processing message from ${message.userPhoneNumber}: ${message.text}`);
 
+    // Add user message to memory
+    memory.add(message.userPhoneNumber, {
+      role: "user",
+      content: message.text,
+      timestamp: Date.now(),
+      imageBase64: message.imageBase64,
+    });
+
     try {
       const response = await agent.invoke({
         message: message.text,
         userPhoneNumber: message.userPhoneNumber,
         messageGuid: message.messageGuid,
         imageBase64: message.imageBase64,
+        history: memory.get(message.userPhoneNumber),
       });
+
+      // Add assistant response to memory
+      memory.add(message.userPhoneNumber, {
+        role: "assistant",
+        content: response,
+        timestamp: Date.now(),
+      });
+
       console.log(`[FLUX] Agent response: ${response}`);
       return response;
     } catch (error: any) {
