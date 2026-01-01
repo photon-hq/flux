@@ -162,8 +162,8 @@ async function runProd() {
         }
         return true;
       },
-      async (messageGuid: string, reaction: string) => {
-        return flux.sendTapback(messageGuid, reaction as any);
+      async (messageGuid: string, reaction: string, chat: string) => {
+        return flux.sendTapback(messageGuid, reaction as any, chat);
       }
     );
   }

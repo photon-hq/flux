@@ -98,20 +98,17 @@ export class FluxClient {
     return result.success;
   }
 
-  async sendTapback(messageGuid: string, reaction: TapbackType): Promise<boolean> {
+  async sendTapback(messageGuid: string, reaction: TapbackType, chat: string): Promise<boolean> {
     if (!this.client) throw new Error("Not connected. Call connect() first.");
-
-    console.log(`[FLUX] Sending tapback: messageGuid=${messageGuid}, reaction=${reaction}`);
 
     try {
       const result = await this.client.FluxService.sendTapback({
         messageGuid,
         reaction,
+        chat,
       });
 
-      if (result.success) {
-        console.log(`[FLUX] Tapback sent successfully!`);
-      } else {
+      if (!result.success) {
         console.error(`[FLUX] Tapback failed: ${result.error}`);
       }
       return result.success;

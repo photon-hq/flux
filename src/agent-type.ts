@@ -7,7 +7,8 @@ export type SendMessageFn = (to: string, text: string) => Promise<boolean>;
 export type TapbackType = 'love' | 'like' | 'dislike' | 'laugh' | 'emphasize' | 'question';
 
 // Type for the sendTapback function passed to onInit for sending reactions
-export type SendTapbackFn = (messageGuid: string, reaction: TapbackType) => Promise<boolean>;
+// chat: The conversation identifier (phone number like "+1234567890" or group ID)
+export type SendTapbackFn = (messageGuid: string, reaction: TapbackType, chat: string) => Promise<boolean>;
 
 export interface FluxAgent {
   // Called once when agent is loaded. Receives sendMessage and sendTapback for proactive messaging (prod mode only).
