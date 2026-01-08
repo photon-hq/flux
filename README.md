@@ -1,5 +1,7 @@
 <div align="center">
 
+![Banner](./.github/assets/banner.png)
+
 # @photon-ai/flux
 
 > An open-source CLI for deploying LangChain agents to iMessage in seconds
