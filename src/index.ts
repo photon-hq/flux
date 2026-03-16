@@ -3,7 +3,7 @@ import * as path from "path";
 import * as readline from "readline";
 
 import { FluxClient } from "./flux-client";
-import { login, logout, loadConfig, getAuthToken } from "./auth";
+import { login, logout, loadConfig, getAuthToken, checkStatus } from "./auth";
 import { findAgentFile, validateAgentFile, loadAgent } from "./agent-loader";
 import { memory } from "./memory";
 
@@ -219,6 +219,82 @@ async function runProd() {
   await new Promise(() => {});
 }
 
+async function statusCommand() {
+  console.log("[FLUX] Checking status...\n");
+
+  const status = await checkStatus();
+
+  // Display status information
+  console.log("═══════════════════════════════════════");
+  console.log("           FLUX STATUS REPORT          ");
+  console.log("═══════════════════════════════════════\n");
+
+  // Login status
+  if (status.loggedIn) {
+    console.log("✅ Authentication:    Logged in");
+    console.log(`📱 Phone Number:      ${status.phone}`);
+
+    if (status.authenticatedAt) {
+      const authDate = new Date(status.authenticatedAt);
+      const now = new Date();
+      const daysSince = Math.floor((now.getTime() - authDate.getTime()) / (1000 * 60 * 60 * 24));
+      console.log(`📅 Authenticated:     ${authDate.toLocaleString()}`);
+      console.log(`⏱️  Time Since Login:  ${daysSince} day(s) ago`);
+    }
+  } else {
+    console.log("❌ Authentication:    Not logged in");
+    console.log("💡 Hint:              Run 'flux login' to authenticate");
+  }
+
+  console.log();
+
+  // Server connectivity
+  if (status.serverReachable === true) {
+    console.log("✅ Server:            Connected");
+    console.log(`🌐 Server Address:    ${status.serverAddress}`);
+  } else if (status.serverReachable === false) {
+    console.log("❌ Server:            Unreachable");
+    console.log(`🌐 Server Address:    ${status.serverAddress}`);
+    if (status.error) {
+      console.log(`⚠️  Error:             ${status.error}`);
+    }
+  } else {
+    console.log("⏸️  Server:            Not checked (no credentials)");
+    console.log(`🌐 Server Address:    ${status.serverAddress}`);
+  }
+
+  console.log();
+
+  // Token validity
+  if (status.tokenValid === true) {
+    console.log("✅ Token:             Valid");
+    console.log("🔐 Status:            Ready to run agents");
+  } else if (status.tokenValid === false) {
+    console.log("❌ Token:             Invalid or expired");
+    console.log("💡 Hint:              Run 'flux login' to refresh");
+  } else {
+    console.log("⏸️  Token:             No token found");
+  }
+
+  console.log();
+  console.log("═══════════════════════════════════════\n");
+
+  // Summary and next steps
+  if (status.loggedIn && status.tokenValid && status.serverReachable) {
+    console.log("🎉 All systems operational! You're ready to deploy agents.");
+    console.log("   Run 'flux run --prod' to start your agent.\n");
+  } else if (!status.loggedIn) {
+    console.log("⚠️  Please log in to use Flux.");
+    console.log("   Run 'flux login' to get started.\n");
+  } else if (!status.serverReachable) {
+    console.log("⚠️  Cannot reach Flux server.");
+    console.log("   Check your internet connection or try again later.\n");
+  } else if (!status.tokenValid) {
+    console.log("⚠️  Your session has expired.");
+    console.log("   Run 'flux login' to refresh your authentication.\n");
+  }
+}
+
 async function main() {
   const command = process.argv[2];
   const flag = process.argv[3];
@@ -251,11 +327,15 @@ async function main() {
         console.log("[FLUX] Not logged in.");
       }
       break;
+    case "status":
+      await statusCommand();
+      break;
     default:
       console.log("Flux CLI - Connect LangChain agents to iMessage\n");
       console.log("Commands:");
       console.log("  flux login          - Log in with your phone number");
       console.log("  flux logout         - Log out");
+      console.log("  flux status         - Check server connectivity and auth status");
       console.log("  flux validate       - Check if agent.ts exports correctly");
       console.log("  flux run --local    - Test agent locally (no server connection)");
       console.log("  flux run --prod     - Run agent connected to bridge (default)");
