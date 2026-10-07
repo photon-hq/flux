@@ -2,11 +2,16 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as readline from "readline";
-import { exec } from "child_process";
+import { spawn } from "child_process";
 import { createGrpcClient } from "better-grpc";
 import { FluxService } from "./service";
+import { randomUUID } from "crypto";
 
 const GRPC_SERVER_ADDRESS = process.env.FLUX_SERVER_ADDRESS || "fluxy.photon.codes:443";
+// Validate that the server address uses a secure scheme
+if (!GRPC_SERVER_ADDRESS.startsWith("https://") && !GRPC_SERVER_ADDRESS.startsWith("grpcs://") && !GRPC_SERVER_ADDRESS.includes(":443")) {
+  console.warn("[FLUX] Warning: GRPC_SERVER_ADDRESS does not appear to use TLS. Consider using a secure endpoint.");
+}
 const CONFIG_DIR = path.join(process.env.HOME || "~", ".flux");
 const CONFIG_FILE = path.join(CONFIG_DIR, "credentials.json");
 const VERIFICATION_NUMBER = "+16286298650"; // Flux iMessage number for verification
@@ -17,28 +22,67 @@ interface FluxCredentials {
   authenticatedAt?: string;
 }
 
+/**
+ * Loads stored Flux credentials from the local configuration file.
+ *
+ * @returns Parsed FluxCredentials if the file exists and is valid, or an empty object.
+ */
 export function loadCredentials(): FluxCredentials {
   try {
     if (fs.existsSync(CONFIG_FILE)) {
       return JSON.parse(fs.readFileSync(CONFIG_FILE, "utf-8"));
     }
-  } catch {}
+  } catch {
+    // Ignore parse errors (malformed/tampered file)
+  }
   return {};
 }
 
+/**
+ * Persists Flux credentials to disk atomically with restrictive file permissions.
+ *
+ * Uses a unique temporary file per invocation to prevent race conditions and
+ * cleans up staging artifacts if writing or renaming fails.
+ *
+ * @param credentials - The credentials object to store.
+ */
 function saveCredentials(credentials: FluxCredentials): void {
   if (!fs.existsSync(CONFIG_DIR)) {
-    fs.mkdirSync(CONFIG_DIR, { recursive: true });
+    fs.mkdirSync(CONFIG_DIR, { recursive: true, mode: 0o700 });
   }
-  fs.writeFileSync(CONFIG_FILE, JSON.stringify(credentials, null, 2));
+  // Write with restrictive permissions (owner read/write only)
+  // Use a unique temporary file + rename for atomic write
+  const tempFile = path.join(CONFIG_DIR, `.credentials-${randomUUID()}.tmp`);
+  try {
+    fs.writeFileSync(tempFile, JSON.stringify(credentials, null, 2), { mode: 0o600 });
+    fs.renameSync(tempFile, CONFIG_FILE);
+  } catch (error) {
+    if (fs.existsSync(tempFile)) {
+      try {
+        fs.unlinkSync(tempFile);
+      } catch {
+        // Ignore secondary error during cleanup
+      }
+    }
+    throw error;
+  }
 }
 
+/**
+ * Removes the local credentials file if it exists.
+ */
 function clearCredentials(): void {
   if (fs.existsSync(CONFIG_FILE)) {
     fs.unlinkSync(CONFIG_FILE);
   }
 }
 
+/**
+ * Prompts the user for interactive CLI input.
+ *
+ * @param question - The prompt string to display to the user.
+ * @returns A promise resolving to the user's trimmed input.
+ */
 async function prompt(question: string): Promise<string> {
   const rl = readline.createInterface({
     input: process.stdin,
@@ -52,25 +96,49 @@ async function prompt(question: string): Promise<string> {
   });
 }
 
+/**
+ * Opens the native iMessage or SMS client with a pre-filled recipient and message body.
+ *
+ * On Windows, invokes rundll32.exe url.dll,FileProtocolHandler to avoid cmd.exe
+ * command separator parsing breaking ampersand query parameters.
+ *
+ * @param to - Recipient phone number.
+ * @param body - Verification message body.
+ * @returns A promise that resolves when the external launcher command exits successfully.
+ */
 function openIMessage(to: string, body: string): Promise<void> {
   return new Promise((resolve, reject) => {
     const url = `sms:${to}&body=${encodeURIComponent(body)}`;
-    const command = process.platform === "darwin"
-      ? `open "${url}"`
-      : process.platform === "win32"
-      ? `start "" "${url}"`
-      : `xdg-open "${url}"`;
-
-    exec(command, (error) => {
-      if (error) {
-        reject(error);
-      } else {
+    // Use spawn with array arguments to avoid shell injection
+    let cmd: string;
+    let args: string[];
+    if (process.platform === "darwin") {
+      cmd = "open";
+      args = [url];
+    } else if (process.platform === "win32") {
+      cmd = "rundll32.exe";
+      args = ["url.dll,FileProtocolHandler", url];
+    } else {
+      cmd = "xdg-open";
+      args = [url];
+    }
+    const child = spawn(cmd, args, { stdio: "ignore" });
+    child.on("error", reject);
+    child.on("close", (code) => {
+      if (code === 0) {
         resolve();
+      } else {
+        reject(new Error(`${cmd} exited with code ${code}`));
       }
     });
   });
 }
 
+/**
+ * Creates a gRPC client instance configured for the Flux service.
+ *
+ * @returns A promise resolving to the connected gRPC client.
+ */
 async function createGrpcClientWithRetry() {
   const clientImpl = FluxService.Client({
     async onIncomingMessage() {
@@ -80,6 +148,11 @@ async function createGrpcClientWithRetry() {
   return await createGrpcClient(GRPC_SERVER_ADDRESS, clientImpl);
 }
 
+/**
+ * Performs interactive login via iMessage verification and saves the resulting session token.
+ *
+ * @returns A promise resolving to the authenticated phone number.
+ */
 export async function login(): Promise<string> {
   // Check if already logged in with valid token
   const existing = loadCredentials();
@@ -111,7 +184,7 @@ export async function login(): Promise<string> {
 
   try {
     const client = await createGrpcClientWithRetry();
-    const clientId = crypto.randomUUID();
+    const clientId = randomUUID();
 
     // Step 1: Request a dynamic verification code
     const codeResult = await client.FluxService.getDynamicCode(clientId, normalizedPhone);
@@ -162,6 +235,9 @@ export async function login(): Promise<string> {
   }
 }
 
+/**
+ * Revokes the active session token on the server and removes local credentials.
+ */
 export async function logout(): Promise<void> {
   const credentials = loadCredentials();
 
@@ -178,6 +254,11 @@ export async function logout(): Promise<void> {
   console.log("[FLUX] Logged out.");
 }
 
+/**
+ * Retrieves a valid auth token and phone number, prompting for login if expired or missing.
+ *
+ * @returns A promise resolving to the valid token and phone number.
+ */
 export async function getAuthToken(): Promise<{ token: string; phone: string }> {
   const credentials = loadCredentials();
 
@@ -211,13 +292,23 @@ export async function getAuthToken(): Promise<{ token: string; phone: string }> 
   return { token: newCredentials.token, phone };
 }
 
-// Legacy function for backwards compatibility
+/**
+ * Retrieves the authenticated user's phone number.
+ *
+ * @deprecated Use getAuthToken instead.
+ * @returns A promise resolving to the phone number.
+ */
 export async function getPhoneNumber(): Promise<string> {
   const { phone } = await getAuthToken();
   return phone;
 }
 
-// Legacy function for backwards compatibility
+/**
+ * Loads the stored phone number from local configuration.
+ *
+ * @deprecated Use loadCredentials instead.
+ * @returns An object containing the optional stored phone number.
+ */
 export function loadConfig(): { phoneNumber?: string } {
   const credentials = loadCredentials();
   return { phoneNumber: credentials.phone };

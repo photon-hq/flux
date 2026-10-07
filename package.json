@@ -20,14 +20,16 @@
   "scripts": {
     "flux": "bun src/index.ts",
     "build": "tsup",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit"
   },
   "dependencies": {
     "tsx": "^4.19.0"
   },
   "devDependencies": {
-    "@types/bun": "latest",
-    "@types/node": "^20.10.0",
+    "@types/bun": "^1.4.2",
+    "@types/node": "^26.6.4",
     "better-grpc": "^0.3.0",
     "tsup": "^8.0.1",
     "typescript": "^5.3.0"
