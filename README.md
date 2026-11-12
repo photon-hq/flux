@@ -11,7 +11,7 @@
 [![npm version](https://img.shields.io/npm/v/@photon-ai/flux.svg)](https://www.npmjs.com/package/@photon-ai/flux)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue.svg)](https://www.typescriptlang.org/)
 [![GitHub release](https://img.shields.io/github/v/release/photon-hq/flux?include_prereleases)](https://github.com/photon-hq/flux/releases)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
+[![License](https://img.shields.io/badge/license-Apache_2.0-blue.svg)](./LICENSE)
 [![Discord](https://img.shields.io/badge/Discord-Join-5865F2.svg?logo=discord&logoColor=white)](https://discord.gg/bZd4CMd2H5)
 
 Flux is an open-sourced CLI tool that lets developers build and deploy LangChain agents that connect to iMessage at no cost and under 5 seconds. 
@@ -453,7 +453,7 @@ We welcome contributions! Flux is fully open source and community-driven. Feel f
 
 ## 📄 License
 
-MIT License - see the [LICENSE](./LICENSE) file for details.
+Apache License 2.0 - see the [LICENSE](./LICENSE) file for details.
 
 <br /><div align="center">
   <sub>Built with ⚡ by <a href="https://photon.codes">Photon</a></sub>
