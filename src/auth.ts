@@ -7,8 +7,6 @@ import { createGrpcClient } from "better-grpc";
 import { FluxService } from "./service";
 
 const GRPC_SERVER_ADDRESS = process.env.FLUX_SERVER_ADDRESS || "fluxy.photon.codes:443";
-const CONFIG_DIR = path.join(process.env.HOME || "~", ".flux");
-const CONFIG_FILE = path.join(CONFIG_DIR, "credentials.json");
 const VERIFICATION_NUMBER = "+16286298650"; // Flux iMessage number for verification
 
 interface FluxCredentials {
@@ -17,25 +15,38 @@ interface FluxCredentials {
   authenticatedAt?: string;
 }
 
+// Helper functions to get config paths dynamically (for testing)
+function getConfigDir(): string {
+  return path.join(process.env.HOME || "~", ".flux");
+}
+
+function getConfigFile(): string {
+  return path.join(getConfigDir(), "credentials.json");
+}
+
 export function loadCredentials(): FluxCredentials {
   try {
-    if (fs.existsSync(CONFIG_FILE)) {
-      return JSON.parse(fs.readFileSync(CONFIG_FILE, "utf-8"));
+    const configFile = getConfigFile();
+    if (fs.existsSync(configFile)) {
+      return JSON.parse(fs.readFileSync(configFile, "utf-8"));
     }
   } catch {}
   return {};
 }
 
 function saveCredentials(credentials: FluxCredentials): void {
-  if (!fs.existsSync(CONFIG_DIR)) {
-    fs.mkdirSync(CONFIG_DIR, { recursive: true });
+  const configDir = getConfigDir();
+  const configFile = getConfigFile();
+  if (!fs.existsSync(configDir)) {
+    fs.mkdirSync(configDir, { recursive: true });
   }
-  fs.writeFileSync(CONFIG_FILE, JSON.stringify(credentials, null, 2));
+  fs.writeFileSync(configFile, JSON.stringify(credentials, null, 2));
 }
 
 function clearCredentials(): void {
-  if (fs.existsSync(CONFIG_FILE)) {
-    fs.unlinkSync(CONFIG_FILE);
+  const configFile = getConfigFile();
+  if (fs.existsSync(configFile)) {
+    fs.unlinkSync(configFile);
   }
 }
 
@@ -221,4 +232,55 @@ export async function getPhoneNumber(): Promise<string> {
 export function loadConfig(): { phoneNumber?: string } {
   const credentials = loadCredentials();
   return { phoneNumber: credentials.phone };
+}
+
+// Export server address for status checks
+export function getServerAddress(): string {
+  return GRPC_SERVER_ADDRESS;
+}
+
+export async function checkStatus(): Promise<{
+  loggedIn: boolean;
+  phone?: string;
+  tokenValid?: boolean;
+  serverReachable?: boolean;
+  authenticatedAt?: string;
+  serverAddress?: string;
+  error?: string;
+}> {
+  const credentials = loadCredentials();
+
+  // Not logged in
+  if (!credentials.token || !credentials.phone) {
+    return {
+      loggedIn: false,
+      serverReachable: undefined,
+      serverAddress: GRPC_SERVER_ADDRESS,
+    };
+  }
+
+  // Try to validate token with server
+  try {
+    const client = await createGrpcClientWithRetry();
+    const result = await client.FluxService.validateToken(credentials.token);
+
+    return {
+      loggedIn: true,
+      phone: result.phone || credentials.phone,
+      tokenValid: result.valid,
+      serverReachable: true,
+      authenticatedAt: credentials.authenticatedAt,
+      serverAddress: GRPC_SERVER_ADDRESS,
+    };
+  } catch (error: any) {
+    return {
+      loggedIn: true,
+      phone: credentials.phone,
+      tokenValid: false,
+      serverReachable: false,
+      authenticatedAt: credentials.authenticatedAt,
+      serverAddress: GRPC_SERVER_ADDRESS,
+      error: error.message,
+    };
+  }
 }
