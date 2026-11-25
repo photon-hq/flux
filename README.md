@@ -14,6 +14,9 @@
 [![License](https://img.shields.io/badge/license-Apache_2.0-blue.svg)](./LICENSE)
 [![Discord](https://img.shields.io/badge/Discord-Join-5865F2.svg?logo=discord&logoColor=white)](https://discord.gg/bZd4CMd2H5)
 
+> [!WARNING]
+> **The hosted Flux bridge is offline.** The CLI connects to `fluxy.photon.codes`, which no longer resolves in public DNS (checked 2026-11-25), so `flux login` and `flux run --prod` can't reach iMessage. To put an agent on iMessage today, use Photon Spectrum (`spectrum-ts`): see the [getting started guide](https://photon.codes/docs/spectrum-ts/getting-started). Photon Cloud is free for personal use with up to 10 users and comes with a managed iMessage number ([pricing](https://photon.codes/pricing)).
+
 Flux is an open-sourced CLI tool that lets developers build and deploy LangChain agents that connect to iMessage at no cost and under 5 seconds. 
 
 ## Features 
